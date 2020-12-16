@@ -1,0 +1,358 @@
+turn_temperature_up:
+  alias: Turn Temperature Up
+  sequence:
+  - service: climate.set_temperature
+    entity_id: climate.thermostat
+    data:
+      temperature: '{{ state_attr(''climate.thermostat'',''temperature'') + 1 }}'
+turn_temperature_down:
+  alias: Turn Temperature Down
+  sequence:
+  - service: climate.set_temperature
+    entity_id: climate.thermostat
+    data:
+      temperature: '{{ state_attr(''climate.thermostat'',''temperature'') - 1 }}'
+fan_mode_on:
+  alias: Fan Mode On
+  sequence:
+  - service: climate.set_fan_mode
+    entity_id: climate.thermostat
+    data:
+      fan_mode: 'on'
+fan_mode_auto:
+  alias: Fan Mode Auto
+  sequence:
+  - service: climate.set_fan_mode
+    entity_id: climate.thermostat
+    data:
+      fan_mode: auto
+fan_mode_diffuse:
+  alias: Fan Mode Circulate
+  sequence:
+  - service: climate.set_fan_mode
+    entity_id: climate.thermostat
+    data:
+      fan_mode: diffuse
+hvac_mode_heat:
+  alias: HVAC mode heating
+  sequence:
+  - service: climate.set_hvac_mode
+    entity_id: climate.thermostat
+    data:
+      hvac_mode: heat
+hvac_mode_cool:
+  alias: HVAC mode cooling
+  sequence:
+  - service: climate.set_hvac_mode
+    entity_id: climate.thermostat
+    data:
+      hvac_mode: cool
+hvac_mode_off:
+  alias: HVAC mode off
+  sequence:
+  - service: climate.set_hvac_mode
+    entity_id: climate.thermostat
+    data:
+      hvac_mode: 'off'
+goodnight:
+  alias: Goodnight Routine
+  sequence:
+  - service: input_boolean.turn_on
+    entity_id: input_boolean.sleeping
+  - condition: state
+    entity_id: person.kay_ohtie
+    state: home
+  - service: light.turn_off
+    entity_id: light.bedroom_lights
+  - delay:
+      seconds: 1
+  - service: light.turn_off
+    entity_id: all
+  - service: switch.turn_off
+    entity_id:
+    - switch.wax_melter
+    - switch.yap_view
+    - switch.living_room_fan
+    - switch.christmas_lights
+    - switch.eufy2
+  - service: script.fan_mode_auto
+  - service: switch.turn_on
+    entity_id: switch.camera_motion_capture
+  - service: alarm_control_panel.alarm_arm_night
+    entity_id: alarm_control_panel.ha_alarm
+goodmorning:
+  alias: Good Morning Routine
+  sequence:
+  - service: alarm_control_panel.alarm_disarm
+    entity_id: alarm_control_panel.ha_alarm
+  - service: input_boolean.turn_off
+    entity_id: input_boolean.sleeping
+  - condition: state
+    entity_id: person.kay_ohtie
+    state: home
+  - service: switch.turn_off
+    entity_id: switch.circadian_lighting_circadian_lighting
+  - service: switch.turn_off
+    entity_id: switch.camera_motion_capture
+  - delay:
+      seconds: 3
+  - service: light.turn_on
+    entity_id: light.bedroom_table_lamp
+    data:
+      transition: 15
+      brightness: 255
+  - delay: 00:00:17
+  - service: switch.turn_on
+    entity_id: switch.circadian_lighting_circadian_lighting
+  - service: media_player.volume_set
+    data:
+      entity_id: media_player.kitchen_speaker
+      volume_level: 0.4
+  - service: script.random_morning
+  mode: single
+random_morning:
+  alias: Random Morning
+  sequence:
+  - service: spotcast.start
+    data:
+      entity_id: media_player.kitchen_speaker
+      uri: '{{ state_attr("input_select.morning_playlist","options")|random }}'
+      shuffle: true
+      repeat: context
+play_spotify_playlist:
+  alias: Play Selected Playlist
+  sequence:
+  - service: spotcast.start
+    data:
+      entity_id: media_player.{{ states("input_select.media_devices") | lower | replace("
+        ","_") }}
+      shuffle: '{{ states("input_boolean.shuffle") | replace("on","true") | replace("off","false")
+        }}'
+      uri: '{{ (states("input_text.playlist_json") | from_json)[states("input_select.playlists")]
+        }}'
+iotlink_notify:
+  alias: Notify via IOTLink
+  icon: far:comment
+  description: Sends a notification to an IOTLink-running device via MQTT
+  fields:
+    device_name:
+      description: Workgroup and computer name with forwardslash
+      example: workgroup/obelisk
+    title:
+      description: Message title (~27 chars)
+      example: Test Notification
+    message:
+      description: Message body
+      example: This is a test notification
+    icon_url:
+      description: (Optional) Custom icon URL for notification
+      example: http://www.home-assistant.io/images/favicon-192x192.png
+    launch_params:
+      description: (Optional) Behavior when notification is clicked
+      example: toast://open/https://home-assistant.io/
+  sequence:
+  - service: mqtt.publish
+    data:
+      topic: iotlink/{{ device_name|default('workgroup/yapbox') }}/commands/notify
+      payload: '{{ {"title":title,"message":message, "iconUrl": icon_url, "launchParams":
+        launch_params}|to_json }}'
+iotlink_command:
+  alias: Command via IOTLink
+  description: Issues a power or similar command over IOTLink MQTT
+  icon: mdi:gesture-tap
+  fields:
+    device_name:
+      description: Name of the device as workgroup/computer
+      example: workgroup/computer
+    command:
+      description: Command to issue (suspend, reboot, shutdown, hibernate, logoff)
+      example: shutdown
+  sequence:
+  - service: mqtt.publish
+    data:
+      topic: iotlink/{{ device_name|default('workgroup/yapbox') }}/commands/{{ command|default('nil')
+        }}
+      payload: ''
+yapbox_sleep:
+  alias: Yapbox Sleep
+  icon: hass:sleep
+  sequence:
+    - service: script.iotlink_command
+      data:
+        device_name: workgroup/yapbox
+        command: suspend
+away_mode:
+  alias: Away Mode
+  description: Sets up away-mode
+  icon: mdi:home-import-outline
+  sequence:
+  - service: alarm_control_panel.alarm_arm_away
+    entity_id: alarm_control_panel.ha_alarm
+  - service: light.turn_off
+    entity_id: all
+  - service: switch.turn_off
+    data:
+      entity_id:
+      - switch.wax_melter
+      - switch.yap_view
+      - switch.living_room_fan
+      - switch.bedroom_fan
+      - switch.docker_librespot
+  - service: switch.turn_on
+    entity_id: switch.camera_motion_capture
+  - service: script.yapbox_sleep
+  - service: notify.notify
+    data:
+      title: Away Mode
+      message: Away status active at home. See you later!
+  - service: climate.set_preset_mode
+    data:
+      preset_mode: away
+      entity_id: climate.thermostat
+home_mode:
+  alias: Home Mode
+  description: Gets stuff set for coming home
+  icon: mdi:home-import-outline
+  sequence:
+  - service: alarm_control_panel.alarm_disarm
+    entity_id: alarm_control_panel.ha_alarm
+  - service: light.turn_on
+    entity_id: light.living_room_lights
+  - service: switch.turn_off
+    entity_id: switch.camera_motion_capture
+  - service: switch.turn_on
+    entity_id:
+    - switch.wax_melter
+    - switch.docker_librespot
+  - service: climate.set_preset_mode
+    data:
+      preset_mode: none
+      entity_id: climate.thermostat
+  mode: single
+play_video_as_music:
+  alias: Play Video as Music
+  mode: single
+  sequence:
+  - data:
+      media_content_type: music
+      entity_id: media_player.{{ states("input_select.media_devices") | lower | replace("
+        ","_") }}
+      media_content_id: '{{ states("input_text.video_url") }}'
+    service: media_extractor.play_media
+hue_effect:
+  alias: Hue Effect
+  description: Activates or deactivates an animated Hue effect stored as a sensor
+  mode: parallel
+  fields:
+    hue_ip:
+      description: Hue Bridge IP address
+      example: 192.168.1.5
+    effect_id:
+      description: Unique ID for the effect (check Bridge API)
+      example: 15
+    status:
+      description: Turn on/off the effect
+      example: 1
+  sequence:
+  - service: rest_command.hue_effect
+    data:
+      hue_ip: '{{ hue_ip }}'
+      effect_id: '{{ effect_id }}'
+      status: '{{ status }}'
+lr_chilling_colors:
+  alias: Chilling colors
+  mode: single
+  sequence:
+  - service: rest_command.hue_effect
+    data:
+      hue_ip: hub-hue.yapspace
+      effect_id: 13
+      status: 1
+  - service: light.turn_off
+    entity_id: light.living_room_overhead
+lr_disturbing_darkness:
+  alias: Disturbing darkness
+  mode: single
+  sequence:
+  - service: rest_command.hue_effect
+    data:
+      hue_ip: hub-hue.yapspace
+      effect_id: 15
+      status: 1
+  - service: light.turn_off
+    entity_id: light.living_room_overhead
+lr_night_flashes:
+  alias: Night flashes
+  mode: single
+  sequence:
+  - service: rest_command.hue_effect
+    data:
+      hue_ip: hub-hue.yapspace
+      effect_id: 18
+      status: 1
+  - service: light.turn_off
+    entity_id: light.living_room_overhead
+lr_spooky_forest:
+  alias: Spooky forest
+  mode: single
+  sequence:
+  - service: rest_command.hue_effect
+    data:
+      hue_ip: hub-hue.yapspace
+      effect_id: 14
+      status: 1
+  - service: light.turn_off
+    entity_id: light.living_room_overhead
+metro_announce:
+  alias: osaka metro announcement
+  description: Plays the Osaka metro announcement tone before a notification
+  fields:
+    entity_id:
+      description: The media_player entity_id to use
+      example: media_player.living_room_speaker
+    message:
+      description: The message to Send
+      example: Time for bed
+    volume:
+      description: Percentage volume level
+      example: 50
+  sequence:
+  - service: media_player.volume_set
+    data:
+      volume_level: 0
+      entity_id: '{{ entity_id }}'
+  - service: media_player.turn_off
+    data:
+      entity_id: '{{ entity_id }}'
+  - delay: 00:00:01
+  - service: media_player.turn_on
+    data:
+      entity_id: '{{ entity_id }}'
+  - delay: 00:00:01
+  - service: media_player.play_media
+    data:
+      entity_id: '{{ entity_id }}'
+      media_content_id: https://hass.coyotesin.space/local/audio/osakametronotif.mp3
+      media_content_type: music
+  - service: media_player.volume_set
+    data:
+      volume_level: '{{ (volume|default(50))/100|float }}'
+      entity_id: '{{ entity_id }}'
+  - delay: 00:00:03
+  - service: tts.google_cloud_say
+    data:
+      entity_id: '{{ entity_id }}'
+      message: '{{ message }}'
+  mode: single
+reset_monitor:
+  alias: Reset Monitor
+  sequence:
+  - service: switch.turn_off
+    data: {}
+    entity_id: switch.eufy1
+  - delay: 00:00:01
+  - service: switch.turn_on
+    data: {}
+    entity_id: switch.eufy1
+  mode: single
+  icon: hass:monitor

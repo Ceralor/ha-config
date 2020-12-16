@@ -1,0 +1,14 @@
+hue_user:
+  name: Hue User
+  mode: password
+  initial: !secret hue_user
+  pattern: !secret hue_user
+  min: 40
+  max: 40
+habitica_user:
+  name: Habitica User
+  mode: password
+  initial: !secret habitica_user
+  pattern: !secret habitica_user
+  min: 36
+  max: 36

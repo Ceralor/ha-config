@@ -1,0 +1,6 @@
+humidity_sensors:
+  entities:
+    - sensor.living_room_humidity
+    - sensor.bedroom_humidity
+    - sensor.office_humidity
+    - sensor.kitchen_humidity

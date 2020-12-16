@@ -1,0 +1,528 @@
+- id: imhome
+  alias: I'm Home
+  trigger:
+  - entity_id: person.kay_ohtie
+    event: enter
+    platform: zone
+    zone: zone.home
+  condition: []
+  action:
+  - service: script.home_mode
+- id: imaway
+  alias: I'm Away
+  trigger:
+  - entity_id: person.kay_ohtie
+    event: leave
+    platform: zone
+    zone: zone.home
+  condition: []
+  action:
+  - service: script.away_mode
+- id: waxonleavework
+  alias: Make it smell good
+  description: ''
+  trigger:
+  - entity_id: person.kay_ohtie
+    event: leave
+    platform: zone
+    zone: zone.work
+  condition: []
+  action:
+  - entity_id: switch.wax_melter
+    service: switch.turn_on
+- id: autowaff
+  alias: Tell me to go to sleep
+  description: ''
+  trigger:
+  - at: 00:00
+    platform: time
+  condition:
+  - condition: or
+    conditions:
+    - condition: state
+      entity_id: light.bedroom_lights
+      state: 'on'
+    - condition: state
+      entity_id: light.living_room_lights
+      state: 'on'
+    - condition: state
+      entity_id: light.office_lights
+      state: 'on'
+  - condition: time
+    weekday:
+    - mon
+    - tue
+    - wed
+    - thu
+    - fri
+  action:
+  - repeat:
+      until:
+      - condition: and
+        conditions:
+        - condition: state
+          entity_id: light.bedroom_lights
+          state: 'off'
+        - condition: state
+          entity_id: light.living_room_lights
+          state: 'off'
+        - condition: state
+          entity_id: light.office_lights
+          state: 'off'
+      sequence:
+      - service: script.metro_announce
+        data:
+          volume: 40
+          message: Time to get to bed.
+          entity_id: media_player.living_room_mini_speaker
+      - delay: 00:15:00
+  mode: single
+- id: thermofix
+  alias: Fix Thermostat for TV Heat
+  description: ''
+  trigger:
+  - entity_id: switch.tv_speakers
+    for: 00:20:00
+    from: 'off'
+    platform: state
+    to: 'on'
+  condition:
+  - '{{ is_state("switch.yap_view","on") }}'
+  action:
+  - data:
+      message: Yap View is on for at least 20 minutes at {{ states('media_player.yap_view')
+        }}
+    service: persistent_notification.create
+- id: updatenotif
+  alias: Version Update Notification
+  description: ''
+  trigger:
+  - platform: template
+    value_template: '{%- set oldver = state_attr("sensor.home_assistant_latest_version","name")
+      -%} {%- if states("sensor.current_version") == oldver -%} false{% else %}true{%
+      endif -%}'
+  condition: []
+  action:
+  - data:
+      message: '**Home Assistant version {{ state_attr("sensor.home_assistant_latest_version","tag_name")
+        }} is now available!**
+
+        Check out the [release notes](https://github.com/home-assistant/home-assistant/releases/tag/{{state_attr("sensor.home_assistant_latest_version","tag_name")}}).
+
+        {{ state_attr("sensor.home_assistant_latest_version","body")|escape }}
+
+        {% if states("sensor.update_minor_version") != states("sensor.current_minor_version")
+        -%} There may be breaking changes, be sure to check the release notes! {%-
+        else %}There are no breaking changes.{% endif %}'
+      title: New Version Available
+    service: persistent_notification.create
+  - data:
+      message: '*Home Assistant version {{ state_attr("sensor.home_assistant_latest_version","tag_name")
+        }} is now available!*
+
+        Check out the [release notes](https://github.com/home-assistant/home-assistant/releases/tag/{{
+        state_attr("sensor.home_assistant_latest_version","tag_name") }}).
+
+
+        {{ state_attr("sensor.home_assistant_latest_version","body")|replace("_","\\_")|regex_replace("\(\[.+\]\)","")|regex_replace("\n\[.+","")|regex_replace("\n
+        ","\n") }}
+
+        {% if states("sensor.update_minor_version") != states("sensor.current_minor_version")
+        -%} There may be breaking changes, be sure to check the release notes! {%-
+        else %}There are no breaking changes.{% endif %}'
+    service: notify.telegram
+- id: AutoKitchenlightOn
+  alias: Kitchen Motion Lights On
+  description: Turn on the kitchen lights based on motion
+  trigger:
+  - entity_id: binary_sensor.kitchen_motion_sensor
+    from: 'off'
+    platform: state
+    to: 'on'
+  condition: []
+  action:
+  - service: light.turn_on
+    data:
+      entity_id: light.kitchen_lights
+      kelvin: '{{ 4000 if is_state("input_boolean.sleeping","off") else 2000 }}'
+- id: AutoKitchenlightOff
+  alias: Kitchen Motion Lights Off
+  description: Split automation for smoothness with color temps
+  trigger:
+  - entity_id: binary_sensor.kitchen_motion_sensor
+    for:
+      minutes: '{{ 2 if is_state("input_boolean.sleeping","on") else 10 }}'
+    from: 'on'
+    platform: state
+    to: 'off'
+  action:
+  - service: light.turn_off
+    data:
+      entity_id: light.kitchen_lights
+- id: AutoColorTempChangeKitchen
+  alias: Change lighting color temp if on for Kitchen
+  trigger:
+  - platform: state
+    entity_id: input_boolean.sleeping
+  condition:
+  - condition: state
+    entity_id: light.kitchen_lights
+    state: 'on'
+  action:
+  - service: light.turn_on
+    data:
+      entity_id: light.kitchen_lights
+      kelvin: '{{ 4000 if (trigger.to_state.state == "off") else 2000 }}'
+- id: smsforgotlock
+  alias: Forgot Lock
+  description: ''
+  trigger:
+  - entity_id: person.kay_ohtie
+    event: leave
+    platform: zone
+    zone: zone.home
+  condition:
+  - condition: state
+    entity_id: lock.back_door
+    state: unlocked
+  action:
+  - service: notify.voipms_sms
+    data:
+      target: '3344440042'
+      message: You forgot to lock the {% if is_state("lock.back_door","unlocked")
+        %}back{% endif %} door!
+- id: vacerror
+  alias: Vacuum Error
+  description: Alert me if the vacuum has a problem
+  trigger:
+  - platform: state
+    entity_id: vacuum.robovac
+    attribute: status
+    to: error
+  action:
+  - service: telegram_bot.send_message
+    data:
+      title: Vacuum Error
+      message: 'Robovac error: {{ state_attr("vacuum.robovac","error") }}'
+      parse_mode: html
+- id: vacstatnotif
+  alias: Vacuum Status Notifier
+  description: Send notification for various actions if I am away
+  trigger:
+  - platform: state
+    entity_id: vacuum.robovac
+    attribute: status
+    from: cleaning
+    to: returning
+  - platform: state
+    entity_id: vacuum.robovac
+    attribute: status
+    from: returning
+    to: docked
+  - platform: state
+    entity_id: vacuum.robovac
+    attribute: status
+    from: docked
+    to: cleaning
+  condition:
+  - '{{ not is_state("person.kay_ohtie","home") }}'
+  action:
+  - service: telegram_bot.send_message
+    data:
+      message: '{%- set status = trigger.to_state.state -%} Robovac is {%- if status
+        == "returning" %} going home  {%- elif status == "docked" %} now home  {%-
+        elif status == "cleaning" %} starting up {%- else %} in an unknown state,
+        please check {%- endif -%}'
+- id: goodnight_intercept
+  alias: Goodnight Routine Intercept
+  trigger:
+    platform: event
+    event_type: google_assistant_command
+    event_data:
+      entity_id: script.goodnight
+      execution:
+        command: action.devices.commands.ActivateScene
+        params:
+          deactivate: false
+  condition:
+  - condition: state
+    entity_id: lock.back_door
+    state: unlocked
+  action:
+  - service: tts.google_translate_say
+    entity_id: media_player.bedroom_clock
+    data:
+      message: By the way, you left a door unlocked.
+- id: armed_away_trigger
+  alias: Armed-Away Trigger
+  trigger:
+  - platform: state
+    entity_id: binary_sensor.kitchen_motion_sensor
+    to: 'on'
+  - platform: state
+    entity_id: lock.back_door
+    to: unlocked
+  condition:
+    condition: state
+    entity_id: alarm_control_panel.ha_alarm
+    state: armed_away
+  action:
+  - service: alarm_control_panel.alarm_trigger
+    entity_id: alarm_control_panel.ha_alarm
+- id: armed_home_trigger
+  alias: Armed-Home Trigger
+  trigger: []
+  condition:
+    condition: state
+    entity_id: alarm_control_panel.ha_alarm
+    state: armed_home
+  action:
+  - service: alarm_control_panel.alarm_trigger
+    entity_id: alarm_control_panel.ha_alarm
+- id: armed_night_trigger
+  alias: Armed-Night Trigger
+  trigger:
+  - platform: state
+    entity_id: lock.back_door
+    to: unlocked
+  condition:
+    condition: state
+    entity_id: alarm_control_panel.ha_alarm
+    state: armed_night
+  action:
+  - service: alarm_control_panel.alarm_trigger
+    entity_id: alarm_control_panel.ha_alarm
+- id: alarm_trigger
+  alias: Alarm Trigger
+  trigger:
+  - platform: state
+    entity_id: alarm_control_panel.ha_alarm
+    to: triggered
+  action:
+  - service: notify.voipms_sms
+    data:
+      target: '3344440042'
+      message: Alarm has been triggered at home
+- id: dehum_notice
+  alias: Dehumidifier Notice
+  description: Alerts that the dehumidifier has turned off on its own
+  trigger:
+  - platform: numeric_state
+    entity_id: switch.dehumidifier
+    attribute: current_a
+    below: 0.1
+  condition:
+  - condition: state
+    entity_id: switch.dehumidifier
+    state: 'on'
+    for:
+      minutes: 3
+  action:
+  - service: notify.notify
+    data:
+      title: Dehumidifier
+      message: Dehumidifier stopped. Resevoir may be full.
+- id: updatesetpoint
+  alias: Update Setpoint
+  description: Updates the input helper for setpoint
+  trigger:
+  - platform: state
+    entity_id: sensor.thermostat_setpoint
+  action:
+  - service: input_number.set_value
+    entity_id: input_number.thermostat_setpoint
+    data:
+      value: '{{ states("sensor.thermostat_setpoint")|int }}'
+- id: updatetherm
+  alias: Update Thermostat
+  mode: restart
+  description: Updates the thermostat for setpoint
+  trigger:
+  - platform: state
+    entity_id: input_number.thermostat_setpoint
+  condition: []
+  action:
+  - delay: 00:00:05
+  - service: climate.set_temperature
+    entity_id: climate.thermostat
+    data:
+      temperature: '{{ states("input_number.thermostat_setpoint")|int }}'
+- id: '1602099312252'
+  alias: Safety Off Wax Melter
+  description: Turns off the wax melter after 2 hours of on-time.
+  trigger:
+  - platform: device
+    type: turned_on
+    device_id: 065e696e10624142afd6549b5a775050
+    entity_id: switch.wax_melter
+    domain: switch
+    for:
+      hours: 2
+      minutes: 0
+      seconds: 0
+  condition: []
+  action:
+  - type: turn_off
+    device_id: 065e696e10624142afd6549b5a775050
+    entity_id: switch.wax_melter
+    domain: switch
+  mode: single
+- id: fitbitsleep
+  alias: Fitbit Sleep Notification
+  description: Sends a notification via Telegram on wake-up
+  trigger:
+  - platform: numeric_state
+    entity_id: sensor.sleep_time_in_bed
+    above: '1'
+  action:
+  - service: notify.telegram
+    data:
+      message: Good morning! You were in bed for a total of {{ timedelta(minutes=(states("sensor.sleep_time_in_bed")|int))
+        }}. Of that, you were asleep for {{ timedelta(minutes=(states("sensor.sleep_minutes_asleep")|int))
+        }}, and woke up {{ states("sensor.awakenings_count") }} times totalling {{
+        states("sensor.sleep_minutes_awake") }}m, for a sleep efficiency of {{ states("sensor.sleep_efficiency")
+        }}%. You fell asleep at {{ states("sensor.sleep_start_time") }} and officially
+        woke at {% set waketime = strptime((states("sensor.sleep_start_time")|string),"%I:%M
+        %p")+timedelta(minutes=(states("sensor.sleep_time_in_bed")|int)) -%} {{ waketime.strftime("%I:%M
+        %p") }}.
+  mode: single
+- id: kicklights
+  alias: Kick Lights
+  description: Kicks the deck lights if either's unavailable
+  trigger:
+  - platform: template
+    value_template: '{{ states.light.deck_bulb.state == ''unavailable'' }}'
+    for: 00:01:00
+  - platform: template
+    value_template: '{{ states.light.deck_strip.state == ''unavailable'' }}'
+    for: 00:01:00
+  condition: []
+  action:
+  - repeat:
+      until:
+      - condition: template
+        value_template: '{{ states[trigger.entity_id].state == ''unavailable'' }}'
+      sequence:
+      - service: rest_command.kick_tasmota
+        data:
+          tasmota_ip: '{{ states("input_text.deck_"+trigger.entity_id.split("_")[-1]+"_ip_address")
+            }}'
+      - delay: 00:01:00
+  mode: parallel
+  max: 2
+- id: startup_kick_lights
+  alias: Startup Kick Lights
+  trigger:
+  - platform: homeassistant
+    event: start
+  action:
+  - service: rest_command.kick_tasmota
+    data:
+      tasmota_ip: '{{ states("input_text.deck_bulb_ip_address") }}'
+  - service: rest_command.kick_tasmota
+    data:
+      tasmota_ip: '{{ states("input_text.deck_strip_ip_address") }}'
+- id: '1602251816494'
+  alias: Update Bulb IPs
+  description: Circumvent crappy template behavior to snag IPs
+  trigger:
+  - platform: state
+    entity_id: sensor.deck_strip_status
+    attribute: IPAddress
+  - platform: state
+    entity_id: sensor.deck_bulb_status
+    attribute: IPAddress
+  condition:
+  - condition: template
+    value_template: '{{ states[trigger.entity_id].state != "unavailable" }}'
+  action:
+  - service: input_text.set_value
+    data:
+      value: '{{ trigger.to_state.attributes.IPAddress }}'
+      entity_id: input_text.deck_{{ trigger.entity_id.split("_")[-2] }}_ip_address
+  mode: parallel
+  max: 2
+- id: '1604177077297'
+  alias: Switch TV to Chromecast
+  description: Switches input to Chromecast even when CEC doesn't fire
+  trigger:
+  - platform: state
+    entity_id: media_player.living_room_tv
+    to: playing
+  condition:
+  - condition: state
+    entity_id: media_player.yap_view
+    state: standby
+  action:
+  - service: media_player.select_source
+    data:
+      source: tvinput.hdmi3
+    entity_id: media_player.yap_view
+  mode: single
+- id: '1606425745817'
+  alias: Thermostat Schedule Change
+  description: ''
+  trigger:
+  - platform: state
+    entity_id: climate.thermostat
+  condition: []
+  action:
+  - service: switch.turn_off
+    data:
+      entity_id: "{% if trigger.to_state.state == \"heat\" -%}\n  switch.schedule_413837\n\
+        {%- else -%}switch.schedule_94aa2e{% endif %}"
+  - service: switch.turn_on
+    data:
+      entity_id: "{% if trigger.to_state.state == \"cool\" -%}\n  switch.schedule_413837\n\
+        {%- else -%}switch.schedule_94aa2e{% endif %}"
+  - service: switch.turn_o{% if trigger.to_state.state == "heat" %}n{% else %}ff{%
+      endif %}
+    data:
+      entity_id: switch.schedule_7f2d36
+  mode: single
+- id: autoclosetlight
+  alias: Auto Closet Lights
+  trigger:
+  - platform: state
+    entity_id: binary_sensor.wyzesense_779c3062
+  action:
+  - service: light.turn_off
+    data:
+      entity_id: light.hallway_light
+  - condition: template
+    value_template: '{{ trigger.to_state.state == "on" }}'
+  - service: light.turn_on
+    data:
+      entity_id: light.hallway_light
+      brightness_pct: 10{%- if is_state('input_boolean.sleeping','off') -%}0{%- endif
+        -%}
+- id: autotvswitches
+  alias: Auto TV Speakers & Bias
+  trigger:
+  - platform: state
+    entity_id: switch.yap_view
+  action:
+  - service: switch.turn_{{ trigger.to_state.state }}
+    data:
+      entity_id: switch.tv_speakers
+  - service: light.turn_{{ trigger.to_state.state }}
+    data:
+      entity_id: light.tv_bias_strip
+- id: '1607283203728'
+  alias: Robovac run @ 100% battery
+  description: ''
+  trigger:
+  - platform: state
+    entity_id: vacuum.robovac
+    attribute: battery_level
+    to: '100'
+    for: 00:00:01
+  condition: []
+  action:
+  - service: vacuum.start
+    data: {}
+    entity_id: vacuum.robovac
+  - service: automation.turn_off
+    data: {}
+    entity_id: automation.robovac_run_twice
+  mode: single

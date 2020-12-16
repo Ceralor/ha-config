@@ -1,0 +1,42 @@
+- platform: group
+  name: Deck Lights
+  entities:
+    - light.deck_bulb
+    - light.deck_strip
+- platform: switch
+  entity_id: switch.desk_lamp
+  name: Desk Lamp
+- platform: group
+  name: Office Lights
+  entities:
+    - light.office_overhead
+    - light.desk_lamp
+- platform: group
+  name: Living Room Lights
+  entities:
+    - light.living_room_strip
+    - light.living_room_ceiling
+    - light.living_room_side_lamp
+- platform: group
+  name: Kitchen Lights
+  entities:
+    - light.kitchen_1
+    - light.kitchen_2
+    - light.kitchen_3
+    - light.kitchen_4
+- platform: group
+  name: Lights
+  entities:
+    - light.kitchen_lights
+    - light.living_room_lights
+    - light.office_lights
+    - light.deck_lights
+    - light.bedroom_lights
+    - light.hallway_light
+    - light.tv_bias_strip
+    - light.living_room_overhead
+- platform: group
+  name: Bedroom Lights
+  entities:
+    - light.bedroom_table_lamp
+    - light.bedroom_overhead

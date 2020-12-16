@@ -1,0 +1,143 @@
+default_config:
+http:
+  use_x_forwarded_for: true
+  trusted_proxies:
+    - 172.27.0.2
+frontend:
+  themes: !include_dir_merge_named themes
+group: !include groups.yaml
+light: !include lights.yaml
+automation: !include automations.yaml
+script: !include scripts.yaml
+scene: !include scenes.yaml
+homeassistant:
+  packages: !include_dir_named packages
+  customize: !include customize.yaml
+  external_url: https://hass.coyotesin.space
+  media_dirs:
+    music: /media/music
+  auth_providers:
+    - type: homeassistant
+    - type: trusted_networks
+      trusted_networks:
+        - 192.168.1.0/24
+zone: !include zones.yaml
+sensor: !include sensors.yaml
+binary_sensor: !include binary_sensors.yaml
+switch: !include switches.yaml
+lock: !include locks.yaml
+input_text: !include input_texts.yaml
+rest_command: !include rest_commands.yaml
+zeroconf:
+media_player:
+  - platform: vlc_telnet
+    name: VLC
+    host: coyotoyden.yapspace
+    port: 4212
+    password: "0000"
+media_extractor:
+recorder:
+  db_url: !secret postgres_url
+  exclude:
+    entity_globs:
+      - sensor.docker_*
+      - sensor.weather_*
+    domains:
+      - weather
+logbook:
+  exclude:
+    entity_globs:
+      - sensor.docker_*
+      - sensor.weather_*
+    domains:
+      - weather
+logger:
+  default: warn
+  logs:
+    homeassistant.components.pyscript: debug
+    pyscript: debug
+    custom_components.pyscript: debug
+tts:
+  - platform: google_translate
+  - platform: google_cloud
+    key_file: !secret google_cloud_keyfile
+    language: en-US
+    gender: female
+alarm_control_panel:
+  - platform: manual_mqtt
+    state_topic: home/alarm_pi/alarm
+    command_topic: home/alarm_pi/alarm/set
+ifttt:
+  key: !secret ifttt_key
+habitica:
+  - api_user: !secret habitica_user
+    api_key: !secret habitica_token
+conversation:
+telegram_bot:
+  - platform: webhooks
+    allowed_chat_ids:
+      - 54326855
+    api_key: !secret telegram_bot_api_key
+    trusted_networks:
+      - 149.154.160.0/20
+      - 91.108.4.0/22
+      - 127.0.0.1/32
+notify: !include notifiers.yaml
+stream:
+camera: !include cameras.yaml
+wemo:
+  discovery: false
+  static:
+    - sw-wax-melter.yapspace
+    - sw-tv-speakers.yapspace
+tplink:
+  discovery: false
+  switch:
+    - host: sw-desk-lamp.yapspace
+    - host: sw-living-room-fan.yapspace
+    - host: sw-bedroom-fan.yapspace
+    - host: sw-dehumidifier.yapspace
+eufy:
+  devices:
+    - address: sw-eufy1.yapspace
+      access_token: !secret eufy1
+      type: T1202
+      name: eufy1
+    - address: sw-eufy2.yapspace
+      access_token: !secret eufy2
+      type: T1202
+      name: eufy2
+spotify:
+  client_id: !secret spotify_client_id
+  client_secret: !secret spotify_client_secret
+climate:
+  - platform: honeywell
+    username: !secret honeywell_username
+    password: !secret honeywell_password
+    scan_interval: 600
+asuswrt:
+  host: 192.168.1.1
+  username: admin
+  ssh_key: "/config/asuswrt.key"
+  sensors:
+    - devices
+    - upload
+    - download
+    - download_speed
+    - upload_speed
+
+# HACS plugin configs
+
+eufy_vacuum:
+  devices:
+    - name: Robovac
+      address: robovac.yapspace
+      access_token: !secret eufyvac_token
+      id: !secret eufyvac_devid
+      type: T2118
+
+spotcast:
+  sp_dc: !secret sp_dc
+  sp_key: !secret sp_key
+
+circadian_lighting:

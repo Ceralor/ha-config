@@ -1,0 +1,13 @@
+- name: telegram
+  platform: telegram
+  chat_id: 54326855
+- name: voipms_sms
+  platform: rest
+  resource: https://voip.ms/api/v1/rest.php
+  target_param_name: "dst"
+  data:
+    api_username: !secret voipms_api_username
+    api_password: !secret voipms_api_password
+    did: !secret voipms_api_send_did
+    method: sendSMS
+    content_type: json

@@ -1,0 +1,8 @@
+- platform: generic
+  stream_source: !secret back_door_cam_rtsp
+  still_image_url: !secret back_door_cam_still
+  name: "Back Door Cam"
+- platform: generic
+  stream_source: !secret living_room_pancam_rtsp
+  still_image_url: !secret living_room_pancam_still
+  name: "Living Room PanCam"

@@ -1,0 +1,8 @@
+hue_effect:
+  url: 'http://{{ hue_ip }}/api/{{ states("input_text.hue_user") }}/sensors/{{ effect_id }}/state'
+  method: put
+  content_type: application/json
+  payload: '{"status": {{ status|int }} }'
+kick_tasmota:
+  url: 'http://{{ tasmota_ip }}/?rst='
+  method: get

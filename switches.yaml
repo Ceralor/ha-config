@@ -1,0 +1,56 @@
+- platform: template
+  switches:
+    yap_view:
+      value_template: "{{ not ( is_state('media_player.yap_view','standby') or is_state('media_player.yap_view','unavailable') ) }}"
+      turn_on:
+        service: media_player.turn_on
+        data:
+          entity_id: media_player.yap_view
+      turn_off:
+        service: media_player.turn_off
+        data:
+          entity_id: media_player.yap_view
+    camera_motion_capture:
+      value_template: "{{ states('input_boolean.camera_motion_capture') }}"
+      turn_on:
+        - service: ifttt.trigger
+          data:
+            event: wyze_motion_on
+        - service: input_boolean.turn_on
+          entity_id: input_boolean.camera_motion_capture
+      turn_off:
+        - service: ifttt.trigger
+          data:
+            event: wyze_motion_off
+        - service: input_boolean.turn_off
+          entity_id: input_boolean.camera_motion_capture
+- platform: circadian_lighting
+  min_brightness: 30
+  sleep_entity: input_boolean.sleeping
+  sleep_state: "on"
+  sleep_brightness: 10
+  sleep_colortemp: 2000
+  lights_ct:
+    - light.bedroom_overhead
+    - light.bedroom_table_lamp
+    - light.office_overhead
+    - light.living_room_side_lamp
+    - light.living_room_ceiling
+    - light.living_room_strip
+    - light.deck_bulb
+    - light.deck_strip
+  lights_brightness:
+    - light.living_room_overhead
+    - light.hallway_light
+- platform: circadian_lighting
+  name: kitchen sleeping
+  min_brightness: 100
+  sleep_entity: input_boolean.sleeping
+  sleep_state: "on"
+  sleep_brightness: 10
+  sleep_colortemp: 2000
+  lights_brightness:
+    - light.kitchen_1
+    - light.kitchen_2
+    - light.kitchen_3
+    - light.kitchen_4

@@ -1,0 +1,47 @@
+- platform: template
+  sensors:
+    thermostat_fan:
+      friendly_name: Thermostat Fan
+      value_template: >-
+        {{ not is_state_attr('climate.thermostat','fan_action','idle') }}
+    thermostat_hvac:
+      friendly_name: Thermostat HVAC
+      value_template: >-
+        {{ (not (is_state_attr('climate.thermostat','hvac_action','idle') or is_state_attr('climate.thermostat','hvac_action','fan'))) and (not is_state('climate.thermostat','off')) }}
+    thermostat_aux_heat:
+      friendly_name: Thermostat Aux Heating
+      value_template: >-
+        {{ is_state_attr('climate.thermostat','aux_heat','on') }}
+    thermostat_heat:
+      friendly_name: Thermostat Heating
+      value_template: >-
+        {{ is_state('climate.thermostat','heat') }}
+    thermostat_cool:
+      friendly_name: Thermostat Cooling
+      value_template: >-
+        {{ is_state('climate.thermostat','cool') }}
+    thermostat_fan_on:
+      friendly_name: Thermostat Fan On
+      value_template: >-
+        {{ is_state_attr('climate.thermostat','fan_mode','on') or is_state_attr('climate.thermostat','fan_mode','diffuse') }}
+    thermostat_fan_auto:
+      friendly_name: Thermostat Fan Auto
+      value_template: >-
+        {{ is_state_attr('climate.thermostat','fan_mode','auto') or is_state_attr('climate.thermostat','fan_mode','diffuse') }}
+    #### Devices Sensors ###
+    kays_switch:
+        value_template: "{{ is_state('device_tracker.cc_fb_65_f2_75_81','home') }}"
+    work_laptop:
+        value_template: "{{ is_state('device_tracker.desktop_p5srra0','home') or is_state('device_tracker.aub_f990pc2_l','home') }}"
+    yapbox:
+        value_template: "{{ is_state('device_tracker.desktop_c414go7','home') }}"
+    micro_desktop:
+        value_template: "{{ is_state('device_tracker.desktop_ebr3cp0','home') or is_state('device_tracker.desktop_ebr3cp0_2','home') }}"
+- platform: wyzesense
+  device: "/dev/wyzesense"
+# - platform: rest
+#   name: PiHole Status
+#   resource: 'http://pi.hole/admin/api.php?auth&status'
+#   method: GET
+#   value_template: '{{ value_json.status == "enabled" }}'
+#   scan_interval: 5

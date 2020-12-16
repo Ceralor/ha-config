@@ -1,0 +1,109 @@
+- platform: template
+  sensors:
+    dehumidifier_amps:
+      friendly_name_template: "{{ state_attr('switch.dehumidifier','friendly_name') }} Current"
+      value_template: '{{ state_attr("switch.dehumidifier","current_a") | float }}'
+      unit_of_measurement: 'A'
+      device_class: power
+    dehumidifier_watts:
+      friendly_name_template: "{{ state_attr('switch.dehumidifier','friendly_name') }} Current Consumption"
+      value_template: '{{ state_attr("switch.dehumidifier","current_power_w") | float }}'
+      unit_of_measurement: 'W'
+      device_class: power
+    dehumidifier_total_kwh:
+      friendly_name_template: "{{ state_attr('switch.dehumidifier','friendly_name') }} Total Consumption"
+      value_template: '{{ state_attr("switch.dehumidifier","total_energy_kwh") | float }}'
+      unit_of_measurement: 'kWh'
+      device_class: power
+    dehumidifier_volts:
+      friendly_name_template: "{{ state_attr('switch.dehumidifier','friendly_name') }} Voltage"
+      value_template: '{{ state_attr("switch.dehumidifier","voltage") | float }}'
+      unit_of_measurement: 'V'
+      device_class: power
+    dehumidifier_today_kwh:
+      friendly_name_template: "{{ state_attr('switch.dehumidifier','friendly_name') }} Today's Consumption"
+      value_template: '{{ state_attr("switch.dehumidifier","today_energy_kwh") | float }}'
+      unit_of_measurement: 'kWh'
+      device_class: power
+    dehumidifier_status:
+      friendly_name: "Dehumidifier Status"
+      value_template: >-
+        {% set watts = state_attr('switch.dehumidifier','current_power_w')|float -%}
+        {%- if watts > 300 -%}Active
+        {%- elif watts >20 -%}Defrosting
+        {%- else -%}Idle{% endif %}
+    current_minor_version:
+      friendly_name: Current Minor Version
+      value_template: '{{ states(''sensor.current_version'')|regex_replace(''(^[0-9]+\\.|\\.[0-9]+)'') }}'
+    update_minor_version:
+      friendly_name: Update Minor Version
+      value_template: '{{ state_attr(''sensor.home_assistant_latest_version'',''tag_name'')|regex_replace(''(^[0-9]+\\.|\\.[0-9]+)'') }}'
+    thermostat_current_temperature:
+      friendly_name: Thermostat Current Temperature
+      value_template: '{{ state_attr(''climate.thermostat'',''current_temperature'') }}'
+      device_class: temperature
+      unit_of_measurement: '°F'
+    thermostat_setpoint:
+      friendly_name: Thermostat Setpoint
+      value_template: '{{ state_attr(''climate.thermostat'',''temperature'') }}'
+      device_class: temperature
+      unit_of_measurement: '°F'
+    thermostat_current_humidity:
+      friendly_name: Thermostat Current Humidity
+      value_template: '{{ state_attr(''climate.thermostat'',''current_humidity'') }}'
+      device_class: humidity
+      unit_of_measurement: '%'
+    barometric_pressure_inhg:
+      friendly_name: Barometric Pressure
+      value_template: '{{ (states(''sensor.barometric_pressure'')|float * 0.02952998751)|round(2) }}'
+      unit_of_measurement: 'inHg'
+      device_class: pressure
+    indoor_pressure_inhg:
+      friendly_name: Indoor Pressure
+      value_template: '{{ (states(''sensor.indoor_pressure'')|float * 0.02952998751)|round(2) }}'
+      unit_of_measurement: 'inHg'
+      device_class: pressure
+    forecast_pressure_inhg:
+      friendly_name: Forecast Pressure
+      value_template: ' {{ state_attr("weather.auburn_daily","pressure") }}'
+      unit_of_measurement: 'inHg'
+      device_class: pressure
+- platform: version
+- platform: rest
+  resource: https://api.github.com/repos/home-assistant/home-assistant/releases/latest
+  value_template: '{{ value_json.tag_name }}'
+  json_attributes:
+    - tag_name
+    - body
+  headers:
+    Accept: application/vnd.github.v3+json
+    Content-Type: application/json
+    User-Agent: Home Assistant REST sensor
+  name: Home Assistant Latest Version
+  scan_interval: 14400
+- platform: mitemp_bt
+  decimals: 1
+- platform: systemmonitor
+  resources:
+    - type: memory_free
+    - type: memory_use_percent
+    - type: disk_free
+      arg: /config
+    - type: last_boot
+- platform: command_line
+  name: "CPU Temperature (Avg)"
+  command: "cat /sys/class/thermal/thermal_zone[0-3]/temp"
+  unit_of_measurement: "C°"
+  value_template: '{{ value.split("\n")|map("int")|sum|multiply(0.00025)|round(1) }}'
+- platform: fitbit
+  clock_format: 12H
+  monitored_resources:
+    - "devices/battery"
+    - "sleep/awakeningsCount"
+    - "sleep/efficiency"
+    - "sleep/minutesAfterWakeup"
+    - "sleep/minutesAsleep"
+    - "sleep/minutesAwake"
+    - "sleep/minutesToFallAsleep"
+    - "sleep/startTime"
+    - "sleep/timeInBed"
