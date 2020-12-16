@@ -1,0 +1,35 @@
+# Example .gitignore file for your config dir.
+# An * ensures that everything will be ignored.
+*
+# You can whitelist files/folders with !, these will not be ignored.
+!*.yaml
+!.gitignore
+!*.md
+!pyscript
+!appdaemon
+!bin
+!blueprints
+!*.py
+!*.txt
+
+# Ignore folders.
+.storage
+.cloud
+.google.token
+.esphome
+custom_components
+themes
+tts
+www
+
+
+# Ignore files
+ip_bans.yaml
+secrets.yaml
+known_devices.yaml
+fitbit_token.conf
+CoyotesHass-ca7b8c5a4bdf.json
+*.log
+zones.yaml
+asuswrt.key
+asuswrt.key.pub
