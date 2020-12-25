@@ -4,6 +4,8 @@
 ## CC-BY-SA Kay Ohtie, 2020
 ## Adds lists for Hue Bridge-stored scenes and Hue Essentials effects/animations stored in the Bridge
 ## This requires two Input Select helpers: Hue Animations and Hue Scenes
+## This also requires an input_text named hue_user that has a valid Hue username, preferably the one your HA app uses
+## It also needs the bridge's IP; I use a rate accelerator to pull this but you can manually plug it below.
 ## You can activate the selected scene/effect by calling pyscript.activate_scene or pyscript.activate_effect
 ## You can also supply room_scene or room_effect, respectively, formatted as "<Room Name> - <Scene/Effect Name>"
 
@@ -16,6 +18,7 @@ def init_pyscript_huelists():
 def update_effects():
     import requests, json, re
     hue_info = state.getattr('sensor.hue_polling_interval')
+    ## Change below to your Hue Bridge's IP if you aren't using Fast Hue Polling integration
     bridge_host = hue_info['bridge_host']
     hue_user = state.get('input_text.hue_user')
     hue_api_url = f"http://{bridge_host}/api/{hue_user}"
