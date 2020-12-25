@@ -85,18 +85,19 @@ telegram_bot:
 notify: !include notifiers.yaml
 stream:
 camera: !include cameras.yaml
-wemo:
-  discovery: false
-  static:
-    - sw-wax-melter.yapspace
-    - sw-tv-speakers.yapspace
-tplink:
-  discovery: false
-  switch:
-    - host: sw-desk-lamp.yapspace
-    - host: sw-living-room-fan.yapspace
-    - host: sw-bedroom-fan.yapspace
-    - host: sw-dehumidifier.yapspace
+#wemo:
+#  discovery: false
+#  static:
+#    - sw-wax-melter.yapspace
+#    - sw-tv-speakers.yapspace
+# tplink:
+#   discovery: false
+#   switch:
+#     - host: sw-desk-lamp.yapspace
+#     - host: sw-living-room-fan.yapspace
+#     - host: sw-bedroom-fan.yapspace
+#     - host: sw-dehumidifier.yapspace
+#     - host: sw-outside-front-lights.yapspace
 eufy:
   devices:
     - address: sw-eufy1.yapspace
@@ -110,11 +111,11 @@ eufy:
 spotify:
   client_id: !secret spotify_client_id
   client_secret: !secret spotify_client_secret
-climate:
-  - platform: honeywell
-    username: !secret honeywell_username
-    password: !secret honeywell_password
-    scan_interval: 600
+# climate:
+#   - platform: honeywell
+#     username: !secret honeywell_username
+#     password: !secret honeywell_password
+#     scan_interval: 600
 asuswrt:
   host: 192.168.1.1
   username: admin

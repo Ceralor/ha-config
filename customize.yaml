@@ -155,3 +155,7 @@ device_tracker.esp_6d26b0:
   friendly_name: Robovac
 light.bedroom_fan:
   hidden: 'true'
+device_tracker.brw30c9ab1808b3:
+  icon: hass:printer
+  friendly_name: Brother HL-L2390DW
+  device_class: connectivity

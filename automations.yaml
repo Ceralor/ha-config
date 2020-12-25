@@ -410,38 +410,38 @@
       - delay: 00:01:00
   mode: parallel
   max: 2
-- id: startup_kick_lights
-  alias: Startup Kick Lights
-  trigger:
-  - platform: homeassistant
-    event: start
-  action:
-  - service: rest_command.kick_tasmota
-    data:
-      tasmota_ip: '{{ states("input_text.deck_bulb_ip_address") }}'
-  - service: rest_command.kick_tasmota
-    data:
-      tasmota_ip: '{{ states("input_text.deck_strip_ip_address") }}'
-- id: '1602251816494'
-  alias: Update Bulb IPs
-  description: Circumvent crappy template behavior to snag IPs
-  trigger:
-  - platform: state
-    entity_id: sensor.deck_strip_status
-    attribute: IPAddress
-  - platform: state
-    entity_id: sensor.deck_bulb_status
-    attribute: IPAddress
-  condition:
-  - condition: template
-    value_template: '{{ states[trigger.entity_id].state != "unavailable" }}'
-  action:
-  - service: input_text.set_value
-    data:
-      value: '{{ trigger.to_state.attributes.IPAddress }}'
-      entity_id: input_text.deck_{{ trigger.entity_id.split("_")[-2] }}_ip_address
-  mode: parallel
-  max: 2
+# - id: startup_kick_lights
+#   alias: Startup Kick Lights
+#   trigger:
+#   - platform: homeassistant
+#     event: start
+#   action:
+#   - service: rest_command.kick_tasmota
+#     data:
+#       tasmota_ip: '{{ states("input_text.deck_bulb_ip_address") }}'
+#   - service: rest_command.kick_tasmota
+#     data:
+#       tasmota_ip: '{{ states("input_text.deck_strip_ip_address") }}'
+# - id: '1602251816494'
+#   alias: Update Bulb IPs
+#   description: Circumvent crappy template behavior to snag IPs
+#   trigger:
+#   - platform: state
+#     entity_id: sensor.deck_strip_status
+#     attribute: IPAddress
+#   - platform: state
+#     entity_id: sensor.deck_bulb_status
+#     attribute: IPAddress
+#   condition:
+#   - condition: template
+#     value_template: '{{ states[trigger.entity_id].state != "unavailable" }}'
+#   action:
+#   - service: input_text.set_value
+#     data:
+#       value: '{{ trigger.to_state.attributes.IPAddress }}'
+#       entity_id: input_text.deck_{{ trigger.entity_id.split("_")[-2] }}_ip_address
+#   mode: parallel
+#   max: 2
 - id: '1604177077297'
   alias: Switch TV to Chromecast
   description: Switches input to Chromecast even when CEC doesn't fire

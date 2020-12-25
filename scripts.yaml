@@ -63,23 +63,21 @@ goodnight:
     entity_id: person.kay_ohtie
     state: home
   - service: light.turn_off
-    entity_id: light.bedroom_lights
-  - delay:
-      seconds: 1
-  - service: light.turn_off
     entity_id: all
   - service: switch.turn_off
     entity_id:
     - switch.wax_melter
     - switch.yap_view
     - switch.living_room_fan
-    - switch.christmas_lights
+    - switch.outside_front_lights
     - switch.eufy2
+    - switch.outdoor_switch
   - service: script.fan_mode_auto
   - service: switch.turn_on
     entity_id: switch.camera_motion_capture
   - service: alarm_control_panel.alarm_arm_night
     entity_id: alarm_control_panel.ha_alarm
+  mode: single
 goodmorning:
   alias: Good Morning Routine
   sequence:
@@ -177,10 +175,10 @@ yapbox_sleep:
   alias: Yapbox Sleep
   icon: hass:sleep
   sequence:
-    - service: script.iotlink_command
-      data:
-        device_name: workgroup/yapbox
-        command: suspend
+  - service: script.iotlink_command
+    data:
+      device_name: workgroup/yapbox
+      command: suspend
 away_mode:
   alias: Away Mode
   description: Sets up away-mode
@@ -200,7 +198,6 @@ away_mode:
       - switch.docker_librespot
   - service: switch.turn_on
     entity_id: switch.camera_motion_capture
-  - service: script.yapbox_sleep
   - service: notify.notify
     data:
       title: Away Mode
@@ -214,6 +211,14 @@ home_mode:
   description: Gets stuff set for coming home
   icon: mdi:home-import-outline
   sequence:
+  - choose:
+    - conditions:
+      - condition: state
+        entity_id: sun.sun
+        state: below_horizon
+      sequence:
+      - service: switch.turn_on
+        entity_id: switch.outside_front_lights
   - service: alarm_control_panel.alarm_disarm
     entity_id: alarm_control_panel.ha_alarm
   - service: light.turn_on
@@ -339,7 +344,7 @@ metro_announce:
       volume_level: '{{ (volume|default(50))/100|float }}'
       entity_id: '{{ entity_id }}'
   - delay: 00:00:03
-  - service: tts.google_cloud_say
+  - service: tts.cloud_say
     data:
       entity_id: '{{ entity_id }}'
       message: '{{ message }}'
