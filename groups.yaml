@@ -4,3 +4,7 @@ humidity_sensors:
     - sensor.bedroom_humidity
     - sensor.office_humidity
     - sensor.kitchen_humidity
+living_room_lights:
+  entities:
+    - light.living_room_ceiling
+    - light.living_room_side_lamp

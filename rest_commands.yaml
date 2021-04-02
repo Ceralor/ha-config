@@ -6,3 +6,13 @@ hue_effect:
 kick_tasmota:
   url: 'http://{{ tasmota_ip }}/?rst='
   method: get
+docker_pull:
+  url: 'http://docker.coyotoyden.yapspace/api/v1/projects'
+  method: put
+  content_type: application/json
+  payload: '{"id": "{{ project }}"}'
+docker_up:
+  url: 'http://docker.coyotoyden.yapspace/api/v1/projects'
+  method: post
+  content_type: application/json
+  payload: '{"id": "{{ project }}"}'

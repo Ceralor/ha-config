@@ -10,24 +10,6 @@ sun.sun:
   hidden: true
 switch.wax_melter:
   device_class: outlet
-  icon: mdi:candle
-  show_in_frontend: 'true'
-light.deck_bulb:
-  icon: mdi:outdoor-lamp
-light.deck_strip:
-  icon: mdi:led-strip
-switch.christmas_lights:
-  icon: mdi:pine-tree
-switch.tv_speakers:
-  icon: mdi:monitor-speaker
-light.living_room_side_lamp:
-  icon: mdi:lamp
-light.living_room_ceiling:
-  icon: mdi:floor-lamp
-light.living_room_overhead:
-  icon: mdi:ceiling-light
-switch.christmas_tree:
-  icon: mdi:pine-tree
 device_tracker.00_01_5c_7b_bc_46:
   hidden: true
 person.lems:
@@ -39,12 +21,6 @@ script.turn_temperature_down:
   icon: mdi:minus-box
 script.turn_temperature_up:
   icon: mdi:plus-box
-light.deck_lights:
-  icon: mdi:outdoor-lamp
-light.bedroom_overhead:
-  icon: mdi:ceiling-light
-light.bedroom_table_lamp:
-  icon: mdi:lamp
 light.bedroom_lights:
   icon: mdi:bed
 light.living_room_lights:
@@ -62,10 +38,7 @@ binary_sensor.kitchen_motion_sensor:
   icon_template: mdi:{% if is_state('binary_sensor.kitchen_motion_sensor','on') %}motion-sensor{%
     else %}walk{% endif %}
 binary_sensor.wyzesense_779c3068:
-  friendly_name: Back Door
-  device_class: lock
-  icon_template: mdi:lock{% if is_state('binary_sensor.wyzesense_779c3068','on') %}-open{%
-    endif %}
+  device_class: door
 input_boolean.camera_motion_capture:
   hidden: true
 binary_sensor.kays_switch:
@@ -79,15 +52,6 @@ binary_sensor.work_laptop:
   friendly_name: Work Laptop
   icon: mdi:laptop
   device_class: connectivity
-light.desk_lamp:
-  icon: mdi:desk-lamp
-light.hallway_light:
-  icon: mdi:hvac
-  show_in_frontend: 'true'
-switch.obelisk:
-  icon: mdi:desktop-tower
-group.obelisk:
-  icon: mdi:desktop-tower
 sensor.outdoor_temperature:
   device_class: temperature
 sensor.outdoor_humidity:
@@ -105,14 +69,8 @@ binary_sensor.yapbox:
   device_class: power
 switch.living_room_fan:
   device_class: outlet
-  icon: mdi:fan
-  switch_in_frontend: 'true'
 switch.bedroom_fan:
   device_class: outlet
-  icon: mdi:fan
-  show_in_frontend: 'true'
-switch.dehumidifier:
-  icon: mdi:air-humidifier
 sensor.dehumidifier_total_kwh:
   icon: mdi:sigma
   device_class: power
@@ -132,12 +90,6 @@ sensor.alpow_date:
   device_class: timestamp
 sensor.alpow_usage:
   device_class: power
-switch.eufy1:
-  device_class: outlet
-  friendly_name: Crappy Asus
-  icon: hass:monitor
-switch.eufy2:
-  device_class: outlet
 sensor.living_room_temperature:
   friendly_name: Living Room Temperature
 sensor.living_room_humidity:
@@ -153,9 +105,9 @@ device_tracker.gateway71c2fa:
   icon: hass:thermostat
 device_tracker.esp_6d26b0:
   friendly_name: Robovac
-light.bedroom_fan:
-  hidden: 'true'
 device_tracker.brw30c9ab1808b3:
   icon: hass:printer
   friendly_name: Brother HL-L2390DW
   device_class: connectivity
+switch.outside_front_lights:
+  device_class: light

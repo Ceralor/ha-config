@@ -3,8 +3,8 @@
 #   value_template: "{{ is_state('binary_sensor.wyzesense_779c3062','off') }}"
 #   lock: []
 #   unlock: []
-- platform: template
-  name: Back door
-  value_template: "{{ is_state('binary_sensor.wyzesense_779c3068','off') }}"
-  lock: []
-  unlock: []
+# - platform: template
+#   name: Back door
+#   value_template: "{{ is_state('binary_sensor.wyzesense_779c3068','off') }}"
+#   lock: []
+#   unlock: []

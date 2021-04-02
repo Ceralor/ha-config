@@ -1,33 +1,64 @@
 - platform: template
   sensors:
-    thermostat_fan:
-      friendly_name: Thermostat Fan
-      value_template: >-
-        {{ not is_state_attr('climate.thermostat','fan_action','idle') }}
+    # thermostat_fan:
+    #   friendly_name: Thermostat Fan
+    #   value_template: >-
+    #     {{ not is_state_attr('climate.thermostat','fan_action','idle') }}
     thermostat_hvac:
       friendly_name: Thermostat HVAC
       value_template: >-
         {{ (not (is_state_attr('climate.thermostat','hvac_action','idle') or is_state_attr('climate.thermostat','hvac_action','fan'))) and (not is_state('climate.thermostat','off')) }}
-    thermostat_aux_heat:
-      friendly_name: Thermostat Aux Heating
-      value_template: >-
-        {{ is_state_attr('climate.thermostat','aux_heat','on') }}
-    thermostat_heat:
-      friendly_name: Thermostat Heating
-      value_template: >-
-        {{ is_state('climate.thermostat','heat') }}
-    thermostat_cool:
-      friendly_name: Thermostat Cooling
-      value_template: >-
-        {{ is_state('climate.thermostat','cool') }}
-    thermostat_fan_on:
-      friendly_name: Thermostat Fan On
-      value_template: >-
-        {{ is_state_attr('climate.thermostat','fan_mode','on') or is_state_attr('climate.thermostat','fan_mode','diffuse') }}
-    thermostat_fan_auto:
-      friendly_name: Thermostat Fan Auto
-      value_template: >-
-        {{ is_state_attr('climate.thermostat','fan_mode','auto') or is_state_attr('climate.thermostat','fan_mode','diffuse') }}
+    # thermostat_aux_heat:
+    #   friendly_name: Thermostat Aux Heating
+    #   value_template: >-
+    #     {{ is_state_attr('climate.thermostat','aux_heat','on') }}
+    # thermostat_heat:
+    #   friendly_name: Thermostat Heating
+    #   value_template: >-
+    #     {{ is_state('climate.thermostat','heat') }}
+    # thermostat_cool:
+    #   friendly_name: Thermostat Cooling
+    #   value_template: >-
+    #     {{ is_state('climate.thermostat','cool') }}
+    # thermostat_fan_on:
+    #   friendly_name: Thermostat Fan On
+    #   value_template: >-
+    #     {{ is_state_attr('climate.thermostat','fan_mode','on') or is_state_attr('climate.thermostat','fan_mode','diffuse') }}
+    # thermostat_fan_auto:
+    #   friendly_name: Thermostat Fan Auto
+    #   value_template: >-
+    #     {{ is_state_attr('climate.thermostat','fan_mode','auto') or is_state_attr('climate.thermostat','fan_mode','diffuse') }}
+    ## Related UI Yaml:
+      #     - entity: binary_sensor.thermostat_fan_on
+      #   theme: Caule Dark Yellow
+      #   hold_action:
+      #     action: none
+      #   icon: 'mdi:fan'
+      #   show_name: false
+      #   tap_action:
+      #     action: call-service
+      #     service: climate.set_fan_mode
+      #     service_data:
+      #       entity_id: climate.thermostat
+      #       fan_mode: 'on'
+      #   type: entity-button
+      # - entity: binary_sensor.thermostat_fan_auto
+      #   theme: Caule Dark Green
+      #   hold_action:
+      #     action: call-service
+      #     service: climate.set_fan_mode
+      #     service_data:
+      #       entity_id: climate.thermostat
+      #       fan_mode: diffuse
+      #   icon: 'mdi:autorenew'
+      #   show_name: false
+      #   tap_action:
+      #     action: call-service
+      #     service: climate.set_fan_mode
+      #     service_data:
+      #       entity_id: climate.thermostat
+      #       fan_mode: auto
+      #   type: entity-button
     #### Devices Sensors ###
     kays_switch:
         value_template: "{{ is_state('device_tracker.cc_fb_65_f2_75_81','home') }}"
@@ -45,3 +76,12 @@
 #   method: GET
 #   value_template: '{{ value_json.status == "enabled" }}'
 #   scan_interval: 5
+- platform: rest
+  name: Hue Sync
+  resource_template: >-
+    http://192.168.1.5/api/{{ states("input_text.hue_user") }}/groups
+  method: GET
+  device_class: connectivity
+  value_template: >-
+    {{ (value_json.values()|selectattr("type","==","Entertainment")|list)[0].stream.active }}
+  scan_interval: 10

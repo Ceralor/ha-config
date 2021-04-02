@@ -18,18 +18,6 @@
   condition: []
   action:
   - service: script.away_mode
-- id: waxonleavework
-  alias: Make it smell good
-  description: ''
-  trigger:
-  - entity_id: person.kay_ohtie
-    event: leave
-    platform: zone
-    zone: zone.work
-  condition: []
-  action:
-  - entity_id: switch.wax_melter
-    service: switch.turn_on
 - id: autowaff
   alias: Tell me to go to sleep
   description: ''
@@ -77,22 +65,6 @@
           entity_id: media_player.living_room_mini_speaker
       - delay: 00:15:00
   mode: single
-- id: thermofix
-  alias: Fix Thermostat for TV Heat
-  description: ''
-  trigger:
-  - entity_id: switch.tv_speakers
-    for: 00:20:00
-    from: 'off'
-    platform: state
-    to: 'on'
-  condition:
-  - '{{ is_state("switch.yap_view","on") }}'
-  action:
-  - data:
-      message: Yap View is on for at least 20 minutes at {{ states('media_player.yap_view')
-        }}
-    service: persistent_notification.create
 - id: updatenotif
   alias: Version Update Notification
   description: ''
@@ -131,34 +103,6 @@
         -%} There may be breaking changes, be sure to check the release notes! {%-
         else %}There are no breaking changes.{% endif %}'
     service: notify.telegram
-- id: AutoKitchenlightOn
-  alias: Kitchen Motion Lights On
-  description: Turn on the kitchen lights based on motion
-  trigger:
-  - entity_id: binary_sensor.kitchen_motion_sensor
-    from: 'off'
-    platform: state
-    to: 'on'
-  condition: []
-  action:
-  - service: light.turn_on
-    data:
-      entity_id: light.kitchen_lights
-      kelvin: '{{ 4000 if is_state("input_boolean.sleeping","off") else 2000 }}'
-- id: AutoKitchenlightOff
-  alias: Kitchen Motion Lights Off
-  description: Split automation for smoothness with color temps
-  trigger:
-  - entity_id: binary_sensor.kitchen_motion_sensor
-    for:
-      minutes: '{{ 2 if is_state("input_boolean.sleeping","on") else 10 }}'
-    from: 'on'
-    platform: state
-    to: 'off'
-  action:
-  - service: light.turn_off
-    data:
-      entity_id: light.kitchen_lights
 - id: AutoColorTempChangeKitchen
   alias: Change lighting color temp if on for Kitchen
   trigger:
@@ -173,24 +117,7 @@
     data:
       entity_id: light.kitchen_lights
       kelvin: '{{ 4000 if (trigger.to_state.state == "off") else 2000 }}'
-- id: smsforgotlock
-  alias: Forgot Lock
-  description: ''
-  trigger:
-  - entity_id: person.kay_ohtie
-    event: leave
-    platform: zone
-    zone: zone.home
-  condition:
-  - condition: state
-    entity_id: lock.back_door
-    state: unlocked
-  action:
-  - service: notify.voipms_sms
-    data:
-      target: '3344440042'
-      message: You forgot to lock the {% if is_state("lock.back_door","unlocked")
-        %}back{% endif %} door!
+      brightness_pct: '{{ 100 if (trigger.to_state.state == "off") else 10 }}'
 - id: vacerror
   alias: Vacuum Error
   description: Alert me if the vacuum has a problem
@@ -233,35 +160,12 @@
         == "returning" %} going home  {%- elif status == "docked" %} now home  {%-
         elif status == "cleaning" %} starting up {%- else %} in an unknown state,
         please check {%- endif -%}'
-- id: goodnight_intercept
-  alias: Goodnight Routine Intercept
-  trigger:
-    platform: event
-    event_type: google_assistant_command
-    event_data:
-      entity_id: script.goodnight
-      execution:
-        command: action.devices.commands.ActivateScene
-        params:
-          deactivate: false
-  condition:
-  - condition: state
-    entity_id: lock.back_door
-    state: unlocked
-  action:
-  - service: tts.google_translate_say
-    entity_id: media_player.bedroom_clock
-    data:
-      message: By the way, you left a door unlocked.
 - id: armed_away_trigger
   alias: Armed-Away Trigger
   trigger:
   - platform: state
     entity_id: binary_sensor.kitchen_motion_sensor
     to: 'on'
-  - platform: state
-    entity_id: lock.back_door
-    to: unlocked
   condition:
     condition: state
     entity_id: alarm_control_panel.ha_alarm
@@ -281,10 +185,7 @@
     entity_id: alarm_control_panel.ha_alarm
 - id: armed_night_trigger
   alias: Armed-Night Trigger
-  trigger:
-  - platform: state
-    entity_id: lock.back_door
-    to: unlocked
+  trigger: []
   condition:
     condition: state
     entity_id: alarm_control_panel.ha_alarm
@@ -322,34 +223,9 @@
     data:
       title: Dehumidifier
       message: Dehumidifier stopped. Resevoir may be full.
-- id: updatesetpoint
-  alias: Update Setpoint
-  description: Updates the input helper for setpoint
-  trigger:
-  - platform: state
-    entity_id: sensor.thermostat_setpoint
-  action:
-  - service: input_number.set_value
-    entity_id: input_number.thermostat_setpoint
-    data:
-      value: '{{ states("sensor.thermostat_setpoint")|int }}'
-- id: updatetherm
-  alias: Update Thermostat
-  mode: restart
-  description: Updates the thermostat for setpoint
-  trigger:
-  - platform: state
-    entity_id: input_number.thermostat_setpoint
-  condition: []
-  action:
-  - delay: 00:00:05
-  - service: climate.set_temperature
-    entity_id: climate.thermostat
-    data:
-      temperature: '{{ states("input_number.thermostat_setpoint")|int }}'
 - id: '1602099312252'
   alias: Safety Off Wax Melter
-  description: Turns off the wax melter after 2 hours of on-time.
+  description: Turns off the wax melter after 15 minutes of on-time.
   trigger:
   - platform: device
     type: turned_on
@@ -357,8 +233,8 @@
     entity_id: switch.wax_melter
     domain: switch
     for:
-      hours: 2
-      minutes: 0
+      hours: 0
+      minutes: 15
       seconds: 0
   condition: []
   action:
@@ -391,17 +267,17 @@
   description: Kicks the deck lights if either's unavailable
   trigger:
   - platform: template
-    value_template: '{{ states.light.deck_bulb.state == ''unavailable'' }}'
+    value_template: '{{ states.light.deck_bulb.state == "unavailable" }}'
     for: 00:01:00
   - platform: template
-    value_template: '{{ states.light.deck_strip.state == ''unavailable'' }}'
+    value_template: '{{ states.light.deck_strip.state == "unavailable" }}'
     for: 00:01:00
   condition: []
   action:
   - repeat:
       until:
       - condition: template
-        value_template: '{{ states[trigger.entity_id].state == ''unavailable'' }}'
+        value_template: '{{ states[trigger.entity_id].state == "unavailable" }}'
       sequence:
       - service: rest_command.kick_tasmota
         data:
@@ -410,38 +286,6 @@
       - delay: 00:01:00
   mode: parallel
   max: 2
-# - id: startup_kick_lights
-#   alias: Startup Kick Lights
-#   trigger:
-#   - platform: homeassistant
-#     event: start
-#   action:
-#   - service: rest_command.kick_tasmota
-#     data:
-#       tasmota_ip: '{{ states("input_text.deck_bulb_ip_address") }}'
-#   - service: rest_command.kick_tasmota
-#     data:
-#       tasmota_ip: '{{ states("input_text.deck_strip_ip_address") }}'
-# - id: '1602251816494'
-#   alias: Update Bulb IPs
-#   description: Circumvent crappy template behavior to snag IPs
-#   trigger:
-#   - platform: state
-#     entity_id: sensor.deck_strip_status
-#     attribute: IPAddress
-#   - platform: state
-#     entity_id: sensor.deck_bulb_status
-#     attribute: IPAddress
-#   condition:
-#   - condition: template
-#     value_template: '{{ states[trigger.entity_id].state != "unavailable" }}'
-#   action:
-#   - service: input_text.set_value
-#     data:
-#       value: '{{ trigger.to_state.attributes.IPAddress }}'
-#       entity_id: input_text.deck_{{ trigger.entity_id.split("_")[-2] }}_ip_address
-#   mode: parallel
-#   max: 2
 - id: '1604177077297'
   alias: Switch TV to Chromecast
   description: Switches input to Chromecast even when CEC doesn't fire
@@ -459,43 +303,6 @@
       source: tvinput.hdmi3
     entity_id: media_player.yap_view
   mode: single
-- id: '1606425745817'
-  alias: Thermostat Schedule Change
-  description: ''
-  trigger:
-  - platform: state
-    entity_id: climate.thermostat
-  condition: []
-  action:
-  - service: switch.turn_off
-    data:
-      entity_id: "{% if trigger.to_state.state == \"heat\" -%}\n  switch.schedule_413837\n\
-        {%- else -%}switch.schedule_94aa2e{% endif %}"
-  - service: switch.turn_on
-    data:
-      entity_id: "{% if trigger.to_state.state == \"cool\" -%}\n  switch.schedule_413837\n\
-        {%- else -%}switch.schedule_94aa2e{% endif %}"
-  - service: switch.turn_o{% if trigger.to_state.state == "heat" %}n{% else %}ff{%
-      endif %}
-    data:
-      entity_id: switch.schedule_7f2d36
-  mode: single
-- id: autoclosetlight
-  alias: Auto Closet Lights
-  trigger:
-  - platform: state
-    entity_id: binary_sensor.wyzesense_779c3062
-  action:
-  - service: light.turn_off
-    data:
-      entity_id: light.hallway_light
-  - condition: template
-    value_template: '{{ trigger.to_state.state == "on" }}'
-  - service: light.turn_on
-    data:
-      entity_id: light.hallway_light
-      brightness_pct: 10{%- if is_state('input_boolean.sleeping','off') -%}0{%- endif
-        -%}
 - id: autotvswitches
   alias: Auto TV Speakers & Bias
   trigger:
@@ -525,4 +332,229 @@
   - service: automation.turn_off
     data: {}
     entity_id: automation.robovac_run_twice
+  mode: single
+- id: thermostat_schedule_toggle
+  alias: Thermostat Schedule Toggle
+  description: Switches schedules based on heating/cooling state
+  trigger:
+  - platform: state
+    entity_id: climate.thermostat
+  - platform: homeassistant
+    event: start
+  condition:
+  - condition: template
+    value_template: '{%- if trigger.platform == "homeassistant" -%} true {%- else
+      -%} {{ trigger.to_state.state != trigger.from_state.state }} {%- endif -%}'
+  action:
+  - choose:
+    - conditions: '{{ is_state("climate.thermostat","heat") }}'
+      sequence:
+      - service: switch.turn_off
+        entity_id: switch.schedule_cooling
+      - service: switch.turn_on
+        entity_id:
+        - switch.schedule_heat_weekdays
+        - switch.schedule_heat_weekend
+    - conditions: '{{ is_state("climate.thermostat","cool") }}'
+      sequence:
+      - service: switch.turn_off
+        entity_id:
+        - switch.schedule_heat_weekdays
+        - switch.schedule_heat_weekend
+      - service: switch.turn_on
+        entity_id: switch.schedule_cooling
+    default:
+    - service: switch.turn_off
+      entity_id:
+      - switch.schedule_cooling
+      - switch.schedule_heat_weekend
+      - switch.schedule_heat_weekdays
+    - choose:
+      - conditions: '{{ not is_state("climate.thermostat","off") }}'
+        sequence:
+        - service: notify.notify
+          data:
+            title: Unsupported Thermostat Schedule State
+            message: Switching off all thermostat schedules
+- id: ifttt_reminder
+  alias: IFTTT Reminders
+  description: Reminders created using an IFTTT trigger
+  trigger:
+  - platform: webhook
+    webhook_id: iftttreminder
+  action:
+  - service: script.verbal_reminder
+    data:
+      delay_minutes: '{{ trigger.json.time }}'
+      message: '{{ trigger.json.message }}'
+      media_entity_id: media_player.cast_speakers
+  mode: single
+- id: '1609913501249'
+  alias: Hue Sync Management
+  description: ''
+  trigger:
+  - platform: state
+    entity_id: binary_sensor.hue_sync
+  condition:
+  - condition: template
+    value_template: '{{ trigger.from_state.state != trigger.to_state.state }}'
+  action:
+  - service: switch.turn_{{ trigger.from_state.state | default('on') }}
+    data:
+      entity_id: switch.circadian_lighting_circadian_lighting
+  mode: single
+- id: '1614553579792'
+  alias: Toggle Deck Light
+  description: ''
+  trigger:
+  - device_id: caac8b79c43ea4a1144ae46f44d73e2a
+    domain: hue
+    platform: device
+    type: remote_button_short_press
+    subtype: button_1
+  condition: []
+  action:
+  - service: light.toggle
+    data: {}
+    target:
+      device_id: 6b45d26b86a6b8dcd096781b4ca109ea
+  mode: single
+- id: '1614555193432'
+  alias: 'Deck: toggle off kitcheb'
+  description: ''
+  trigger:
+  - device_id: caac8b79c43ea4a1144ae46f44d73e2a
+    domain: hue
+    platform: device
+    type: remote_button_short_press
+    subtype: button_4
+  condition: []
+  action:
+  - service: light.toggle
+    data: {}
+    entity_id: light.kitchen_lights
+  mode: single
+- id: '1614811735938'
+  alias: Kitchen Motion Lights
+  description: ''
+  use_blueprint:
+    path: homeassistant/motion_light.yaml
+    input:
+      motion_entity: binary_sensor.kitchen_motion_sensor
+      light_target:
+        entity_id: light.kitchen_lights
+      no_motion_wait: 300
+- id: '1614925333833'
+  alias: Closet Hallway Light
+  description: ''
+  use_blueprint:
+    path: bergstrom/door-sensor-turn-on-off-light.yaml
+    input:
+      doorsensor_entity: binary_sensor.wyzesense_779c3062
+      light_target:
+        device_id: 9300899472264249a635bcf495d93732
+      door_closed_wait: 0
+- id: '1615572715254'
+  alias: Mailbox Notifications
+  description: Notifies of mail
+  trigger:
+  - platform: state
+    entity_id: binary_sensor.wyzesense_779c3068
+    to: 'on'
+  condition: []
+  action:
+  - service: notify.notify
+    data:
+      title: Mail's here!
+      message: Your mailbox has been opened.
+  mode: single
+- id: '1615945823861'
+  alias: Tornado = Lights!
+  description: wake me the goddamn fuck up for a torando
+  trigger:
+  - platform: event
+    event_type: nwr_same
+    event_data:
+      type: TOR
+  condition: []
+  action:
+  - service: input_boolean.turn_off
+    target:
+      entity_id: input_boolean.sleeping
+  - service: switch.turn_off
+    target:
+      entity_id:
+      - switch.circadian_lighting_circadian_lighting
+      - switch.circadian_lighting_kitchen_sleeping
+  - service: light.turn_on
+    data:
+      brightness_pct: 100
+      kelvin: 4000
+    target:
+      device_id:
+      - b70e0f0d242040ce89c08669f5ddb735
+      - 1811240ff32244f68b209afb674f5e1a
+      - 9300899472264249a635bcf495d93732
+      - 71c85dbb63bd4adda16c29fca45c6954
+      - 9e040c868af94410896202aa7927a9e3
+      entity_id: light.kitchen_lights
+  - service: pyscript.illuminate_walf
+    data:
+      device_names:
+      - Bedroom Lamp
+      - Living Room Lamp
+      - Living Room Lamp 2
+      - Kitchen Light
+  mode: single
+- id: '1615949430225'
+  alias: NWS Test
+  description: ''
+  trigger:
+  - platform: event
+    event_type: nwr_same
+    event_data: {}
+  condition: []
+  action:
+  - service: notify.telegram
+    data:
+      message: 'EAS: {{ trigger.event.data.type }} message: {{ trigger.event.data.message
+        }}'
+  mode: single
+- id: '1616350998965'
+  alias: Grow Lights Schedule
+  description: ''
+  use_blueprint:
+    path: EPMatt/on_off_schedule_state_persistence.yaml
+    input:
+      off_time: '2:00:00'
+      automation_target:
+        device_id: 8d4f25d5a3871d4c882c2bb2e2211a5e
+      on_time: '17:00:00'
+      trigger_at_homeassistant_startup: true
+- id: '1617316064122'
+  alias: Bedroom Alarm Lights
+  description: ''
+  trigger:
+  - platform: template
+    value_template: '{% set alarming = false %}
+
+      {% for alarm in state_attr("sensor.bedroom_clock_alarms","alarms") %}
+
+      {% if (alarm[''fire_time''] - 10 <= (as_timestamp(now())|int)) and  (alarm[''fire_time'']+10
+      >= (as_timestamp(now())|int))  %}
+
+      {% set alarming = true %}
+
+      {% endif %}
+
+      {% endfor %}
+
+      {{ alarming }}'
+  condition: []
+  action:
+  - type: turn_on
+    device_id: 1811240ff32244f68b209afb674f5e1a
+    entity_id: light.bedroom_table_lamp
+    domain: light
+    brightness_pct: 100
   mode: single

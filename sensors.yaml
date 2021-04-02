@@ -1,66 +1,59 @@
 - platform: template
   sensors:
-    dehumidifier_amps:
-      friendly_name_template: "{{ state_attr('switch.dehumidifier','friendly_name') }} Current"
-      value_template: '{{ state_attr("switch.dehumidifier","current_a") | float }}'
+    entertainment_center_amps:
+      friendly_name_template: "{{ state_attr('switch.entertainment_center','friendly_name') }} Current"
+      value_template: '{{ state_attr("switch.entertainment_center","current_a") | float }}'
       unit_of_measurement: 'A'
       device_class: power
-    dehumidifier_watts:
-      friendly_name_template: "{{ state_attr('switch.dehumidifier','friendly_name') }} Current Consumption"
-      value_template: '{{ state_attr("switch.dehumidifier","current_power_w") | float }}'
+    entertainment_center_watts:
+      friendly_name_template: "{{ state_attr('switch.entertainment_center','friendly_name') }} Current Consumption"
+      value_template: '{{ state_attr("switch.entertainment_center","current_power_w") | float }}'
       unit_of_measurement: 'W'
       device_class: power
-    dehumidifier_total_kwh:
-      friendly_name_template: "{{ state_attr('switch.dehumidifier','friendly_name') }} Total Consumption"
-      value_template: '{{ state_attr("switch.dehumidifier","total_energy_kwh") | float }}'
+    entertainment_center_total_kwh:
+      friendly_name_template: "{{ state_attr('switch.entertainment_center','friendly_name') }} Total Consumption"
+      value_template: '{{ state_attr("switch.entertainment_center","total_energy_kwh") | float }}'
       unit_of_measurement: 'kWh'
       device_class: power
-    dehumidifier_volts:
-      friendly_name_template: "{{ state_attr('switch.dehumidifier','friendly_name') }} Voltage"
-      value_template: '{{ state_attr("switch.dehumidifier","voltage") | float }}'
+    entertainment_center_volts:
+      friendly_name_template: "{{ state_attr('switch.entertainment_center','friendly_name') }} Voltage"
+      value_template: '{{ state_attr("switch.entertainment_center","voltage") | float }}'
       unit_of_measurement: 'V'
       device_class: power
-    dehumidifier_today_kwh:
-      friendly_name_template: "{{ state_attr('switch.dehumidifier','friendly_name') }} Today's Consumption"
-      value_template: '{{ state_attr("switch.dehumidifier","today_energy_kwh") | float }}'
+    entertainment_center_today_kwh:
+      friendly_name_template: "{{ state_attr('switch.entertainment_center','friendly_name') }} Today's Consumption"
+      value_template: '{{ state_attr("switch.entertainment_center","today_energy_kwh") | float }}'
       unit_of_measurement: 'kWh'
       device_class: power
-    dehumidifier_status:
-      friendly_name: "Dehumidifier Status"
-      value_template: >-
-        {% set watts = state_attr('switch.dehumidifier','current_power_w')|float -%}
-        {%- if watts > 300 -%}Active
-        {%- elif watts >20 -%}Defrosting
-        {%- else -%}Idle{% endif %}
     current_minor_version:
       friendly_name: Current Minor Version
-      value_template: '{{ states(''sensor.current_version'')|regex_replace(''(^[0-9]+\\.|\\.[0-9]+)'') }}'
+      value_template: '{{ states("sensor.current_version")|regex_replace("(^[0-9]+\\.|\\.[0-9]+)") }}'
     update_minor_version:
       friendly_name: Update Minor Version
-      value_template: '{{ state_attr(''sensor.home_assistant_latest_version'',''tag_name'')|regex_replace(''(^[0-9]+\\.|\\.[0-9]+)'') }}'
+      value_template: '{{ state_attr("sensor.home_assistant_latest_version","tag_name")|regex_replace("(^[0-9]+\\.|\\.[0-9]+)") }}'
     thermostat_current_temperature:
       friendly_name: Thermostat Current Temperature
-      value_template: '{{ state_attr(''climate.thermostat'',''current_temperature'') }}'
+      value_template: '{{ state_attr("climate.thermostat","current_temperature") }}'
       device_class: temperature
       unit_of_measurement: '°F'
     thermostat_setpoint:
       friendly_name: Thermostat Setpoint
-      value_template: '{{ state_attr(''climate.thermostat'',''temperature'') }}'
+      value_template: '{{ state_attr("climate.thermostat","temperature") }}'
       device_class: temperature
       unit_of_measurement: '°F'
     thermostat_current_humidity:
       friendly_name: Thermostat Current Humidity
-      value_template: '{{ state_attr(''climate.thermostat'',''current_humidity'') }}'
+      value_template: '{{ state_attr("climate.thermostat","current_humidity") }}'
       device_class: humidity
       unit_of_measurement: '%'
     barometric_pressure_inhg:
       friendly_name: Barometric Pressure
-      value_template: '{{ (states(''sensor.barometric_pressure'')|float * 0.02952998751)|round(2) }}'
+      value_template: '{{ (states("sensor.barometric_pressure")|float * 0.02952998751)|round(2) }}'
       unit_of_measurement: 'inHg'
       device_class: pressure
     indoor_pressure_inhg:
       friendly_name: Indoor Pressure
-      value_template: '{{ (states(''sensor.indoor_pressure'')|float * 0.02952998751)|round(2) }}'
+      value_template: '{{ (states("sensor.indoor_pressure")|float * 0.02952998751)|round(2) }}'
       unit_of_measurement: 'inHg'
       device_class: pressure
     forecast_pressure_inhg:
@@ -81,8 +74,8 @@
     User-Agent: Home Assistant REST sensor
   name: Home Assistant Latest Version
   scan_interval: 14400
-- platform: mitemp_bt
-  decimals: 1
+# - platform: mitemp_bt
+#   decimals: 1
 - platform: systemmonitor
   resources:
     - type: memory_free
@@ -107,3 +100,11 @@
     - "sleep/minutesToFallAsleep"
     - "sleep/startTime"
     - "sleep/timeInBed"
+# - platform: influxdb
+#   api_version: 1
+#   host: 192.168.1.10
+#   port: 18086
+#   username: !env_var INFLUXDB_USER
+#   password: !env_var INFLUXDB_USER_PASSWORD
+#   database: !env_var INFLUXDB_DB
+#   queries: []

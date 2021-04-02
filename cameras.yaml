@@ -1,8 +1,19 @@
-- platform: generic
-  stream_source: !secret back_door_cam_rtsp
-  still_image_url: !secret back_door_cam_still
+# - platform: generic
+#   stream_source: !secret back_door_cam_rtsp
+#   still_image_url: !secret back_door_cam_still
+# - platform: generic
+#   stream_source: !secret living_room_pancam_rtsp
+#   still_image_url: !secret living_room_pancam_still
+- platform: mjpeg
+  mjpeg_url: http://192.168.1.10:18083
   name: "Back Door Cam"
-- platform: generic
-  stream_source: !secret living_room_pancam_rtsp
-  still_image_url: !secret living_room_pancam_still
+- platform: mjpeg
+  mjpeg_url: http://192.168.1.10:18082
   name: "Living Room PanCam"
+- platform: mjpeg
+  name: Office Cam
+  mjpeg_url: http://192.168.1.10:18081
+- platform: generic
+  name: "Spotify Album Cover"
+  still_image_url: 'https://hass.coyotesin.space{{ state_attr("media_player.spotify_ceralor","entity_picture") }}'
+

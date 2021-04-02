@@ -13,7 +13,7 @@
 def init_pyscript_huelists():
     pyscript.hue_lists = "ATTRIB"
 
-@time_trigger('startup','cron(0 * * * *')
+@time_trigger('startup','cron(0 * * * *)')
 @service
 def update_effects():
     import requests, json, re
@@ -23,9 +23,9 @@ def update_effects():
     hue_user = state.get('input_text.hue_user')
     hue_api_url = f"http://{bridge_host}/api/{hue_user}"
     groupsearch = re.compile("/groups/\d+")
-    sensors = requests.get(hue_api_url+'/sensors').json()
-    groups = requests.get(hue_api_url+'/groups').json()
-    resourcelinks = requests.get(hue_api_url+'/resourcelinks').json()
+    sensors = task.executor(requests.get,hue_api_url+'/sensors').json()
+    groups = task.executor(requests.get,hue_api_url+'/groups').json()
+    resourcelinks = task.executor(requests.get,hue_api_url+'/resourcelinks').json()
     hue_essentials_sensors = [x for x in sensors.keys() if sensors[x]['type'] == 'CLIPGenericStatus']
     hue_effects_sensors = [x for x in hue_essentials_sensors if sensors[x]['modelid'] == 'HueEssentialsEffect_State']
     hue_effects = {}
@@ -40,7 +40,7 @@ def update_effects():
     state.setattr('pyscript.hue_lists.effects_json', json.dumps(hue_effects))
     input_select.set_options(options=list(hue_effects.keys()),entity_id="input_select.hue_animations")
 
-@time_trigger('startup','cron(0 * * * *')
+@time_trigger('startup','cron(0 * * * *)')
 @service
 def update_scenes():
     import requests, json
@@ -48,8 +48,8 @@ def update_scenes():
     bridge_host = hue_info['bridge_host']
     hue_user = state.get('input_text.hue_user')
     hue_api_url = f"http://{bridge_host}/api/{hue_user}"
-    groups = requests.get(hue_api_url+'/groups').json()
-    scenes = requests.get(hue_api_url+'/scenes').json()
+    groups = task.executor(requests.get,hue_api_url+'/groups').json()
+    scenes = task.executor(requests.get,hue_api_url+'/scenes').json()
     hue_scenes = {}
     for scene_id in scenes.keys():
         scene = scenes[scene_id]
@@ -85,7 +85,7 @@ def send_sensor_state(sensor_id=None,state_name=None,state_value=None):
     hue_user = state.get('input_text.hue_user')
     hue_api_url = f"http://{bridge_host}/api/{hue_user}"
     body = {state_name: state_value}
-    r = requests.put(hue_api_url+f"/sensors/{sensor_id}/state",json=body)
+    r = task.executor(requests.put,hue_api_url+f"/sensors/{sensor_id}/state",json=body)
     if r.status_code == 200:
         log.debug(f"Successfully set {state_name} to {state_value} on sensor ID {sensor_id}")
     else:

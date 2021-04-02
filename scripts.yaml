@@ -54,6 +54,50 @@ hvac_mode_off:
     entity_id: climate.thermostat
     data:
       hvac_mode: 'off'
+thermostat_away:
+  alias: Thermostat Away Mode
+  description: For thermostats without integrated away
+  sequence:
+  - choose:
+    - conditions: "{{ is_state(\"climate.thermostat\",\"heat\") or\n   is_state(\"\
+        climate.thermostat\",\"cool\") }}\n"
+      sequence:
+      - service: switch.turn_off
+        entity_id:
+        - switch.schedule_heat_weekdays
+        - switch.schedule_heat_weekend
+        - switch.schedule_cooling
+      - service: climate.set_temperature
+        data:
+          entity_id: climate.thermostat
+          temperature: '{%- if is_state("climate.thermostat","heat") -%} {{ states("input_number.thermostat_away_mode_heat")
+            }} {%- else -%} {{ states("input_number.thermostat_away_mode_cool") }}
+            {%- endif -%}'
+    default:
+    - service: notify.notify
+      data:
+        title: Unsupported mode
+        message: Unsupported heating/cooling mode for setting a target temp for away
+thermostat_home:
+  alias: Thermostat Home Mode
+  description: For thermostats without integrated away
+  sequence:
+  - choose:
+    - conditions: '{{ is_state("climate.thermostat","heat") }}'
+      sequence:
+      - service: switch.turn_on
+        entity_id:
+        - switch.schedule_heat_weekdays
+        - switch.schedule_heat_weekend
+    - conditions: '{{ is_state("climate.thermostat","cool") }}'
+      sequence:
+      - service: switch.turn_on
+        entity_id: switch.schedule_cooling
+    default:
+    - service: notify.notify
+      data:
+        title: Unsupported mode
+        message: Unsupported heating/cooling mode for restoring a schedule for home
 goodnight:
   alias: Goodnight Routine
   sequence:
@@ -70,7 +114,6 @@ goodnight:
     - switch.yap_view
     - switch.living_room_fan
     - switch.outside_front_lights
-    - switch.eufy2
     - switch.outdoor_switch
   - service: script.fan_mode_auto
   - service: switch.turn_on
@@ -99,6 +142,10 @@ goodmorning:
     data:
       transition: 15
       brightness: 255
+  - service: light.turn_on
+    entity_id:
+    - light.kitchen_lights
+    - light.bulletin_board
   - delay: 00:00:17
   - service: switch.turn_on
     entity_id: switch.circadian_lighting_circadian_lighting
@@ -195,17 +242,13 @@ away_mode:
       - switch.yap_view
       - switch.living_room_fan
       - switch.bedroom_fan
-      - switch.docker_librespot
   - service: switch.turn_on
     entity_id: switch.camera_motion_capture
   - service: notify.notify
     data:
       title: Away Mode
       message: Away status active at home. See you later!
-  - service: climate.set_preset_mode
-    data:
-      preset_mode: away
-      entity_id: climate.thermostat
+  - service: script.thermostat_away
 home_mode:
   alias: Home Mode
   description: Gets stuff set for coming home
@@ -225,14 +268,7 @@ home_mode:
     entity_id: light.living_room_lights
   - service: switch.turn_off
     entity_id: switch.camera_motion_capture
-  - service: switch.turn_on
-    entity_id:
-    - switch.wax_melter
-    - switch.docker_librespot
-  - service: climate.set_preset_mode
-    data:
-      preset_mode: none
-      entity_id: climate.thermostat
+  - service: script.thermostat_home
   mode: single
 play_video_as_music:
   alias: Play Video as Music
@@ -244,70 +280,6 @@ play_video_as_music:
         ","_") }}
       media_content_id: '{{ states("input_text.video_url") }}'
     service: media_extractor.play_media
-hue_effect:
-  alias: Hue Effect
-  description: Activates or deactivates an animated Hue effect stored as a sensor
-  mode: parallel
-  fields:
-    hue_ip:
-      description: Hue Bridge IP address
-      example: 192.168.1.5
-    effect_id:
-      description: Unique ID for the effect (check Bridge API)
-      example: 15
-    status:
-      description: Turn on/off the effect
-      example: 1
-  sequence:
-  - service: rest_command.hue_effect
-    data:
-      hue_ip: '{{ hue_ip }}'
-      effect_id: '{{ effect_id }}'
-      status: '{{ status }}'
-lr_chilling_colors:
-  alias: Chilling colors
-  mode: single
-  sequence:
-  - service: rest_command.hue_effect
-    data:
-      hue_ip: hub-hue.yapspace
-      effect_id: 13
-      status: 1
-  - service: light.turn_off
-    entity_id: light.living_room_overhead
-lr_disturbing_darkness:
-  alias: Disturbing darkness
-  mode: single
-  sequence:
-  - service: rest_command.hue_effect
-    data:
-      hue_ip: hub-hue.yapspace
-      effect_id: 15
-      status: 1
-  - service: light.turn_off
-    entity_id: light.living_room_overhead
-lr_night_flashes:
-  alias: Night flashes
-  mode: single
-  sequence:
-  - service: rest_command.hue_effect
-    data:
-      hue_ip: hub-hue.yapspace
-      effect_id: 18
-      status: 1
-  - service: light.turn_off
-    entity_id: light.living_room_overhead
-lr_spooky_forest:
-  alias: Spooky forest
-  mode: single
-  sequence:
-  - service: rest_command.hue_effect
-    data:
-      hue_ip: hub-hue.yapspace
-      effect_id: 14
-      status: 1
-  - service: light.turn_off
-    entity_id: light.living_room_overhead
 metro_announce:
   alias: osaka metro announcement
   description: Plays the Osaka metro announcement tone before a notification
@@ -349,15 +321,63 @@ metro_announce:
       entity_id: '{{ entity_id }}'
       message: '{{ message }}'
   mode: single
-reset_monitor:
-  alias: Reset Monitor
+update_dockers:
+  alias: Update Dockers
   sequence:
-  - service: switch.turn_off
-    data: {}
-    entity_id: switch.eufy1
-  - delay: 00:00:01
-  - service: switch.turn_on
-    data: {}
-    entity_id: switch.eufy1
+  - service: rest_command.docker_pull
+    data:
+      project: homeassistant
+  - service: rest_command.docker_pull
+    data:
+      project: nextcloud
+  - service: rest_command.docker_pull
+    data:
+      project: pihole
+  - service: rest_command.docker_pull
+    data:
+      project: traefik
+  - service: notify.persistent_notification
+    data:
+      title: Updated dockers
+      message: Updated dockers
+verbal_reminder:
+  alias: Verbal Reminder
+  sequence:
+  - service: scheduler.add
+    data:
+      weekdays: '{{ (now() + timedelta(minutes=delay_minutes))| as_timestamp | timestamp_custom("%a")
+        | lower }}'
+      repeat_type: single
+      timeslots:
+      - start: '{{ (now() + timedelta(minutes=delay_minutes))| as_timestamp | timestamp_custom("%H:%M")
+          }}'
+        actions:
+        - entity_id: media_player.cast_speakers
+          service: script.metro_announce
+          service_data:
+            entity_id: '{{ media_entity_id | default(''media_player.cast_speakers'')
+              }}'
+            message: '{{ message }}'
+  mode: parallel
+  icon: hass:script
+  max: 10
+  fields:
+    delay_minutes:
+      description: Delay before reminder in minutes
+      example: 10
+    message:
+      description: The reminder to speak
+      example: Check on the laundry
+    media_entity_id:
+      description: Which speaker to use (defaults to all)
+      example: media_player.cast_speakers
+start_lovelace_touch:
+  alias: Start Lovelace Touch
+  sequence:
+  - service: cast.show_lovelace_view
+    data:
+      dashboard_path: lovelace-fluid
+      view_path: main
+      entity_id: media_player.lenovosmartdisplay7494
   mode: single
-  icon: hass:monitor
+  icon: hass:touch

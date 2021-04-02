@@ -36,11 +36,7 @@
     - light.office_overhead
     - light.living_room_side_lamp
     - light.living_room_ceiling
-    - light.living_room_strip
-    - light.deck_bulb
-    - light.deck_strip
   lights_brightness:
-    - light.living_room_overhead
     - light.hallway_light
 - platform: circadian_lighting
   name: kitchen sleeping
