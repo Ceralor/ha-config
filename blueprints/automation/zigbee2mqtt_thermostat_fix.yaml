@@ -1,0 +1,46 @@
+blueprint:
+  name: Zigbee2mqtt Thermostat Fix for Google Home
+  description: Handles the setpoint for any dual-setpoint thermostats in Zigbee2MQTT, such as the Centralite Pearl
+  domain: automation
+  input:
+    thermostat_entity:
+      name: Thermostat
+      selector:
+        entity:
+          domain: climate
+          integration: mqtt
+mode: single
+trigger:
+  - platform: event
+    event_type: google_assistant_command
+    event_data:
+      entity_id:
+        - !input thermostat_entity
+      execution:
+        - command: action.devices.commands.ThermostatTemperatureSetpoint
+action:
+  - alias: Set Thermostat
+    variables:
+      thermostat_entity: !input thermostat_entity
+  - alias: Set Variables
+    variables:
+      target_temp_in_f: >-
+        {%- set
+        target_in_c=trigger.event.data.execution[0].params.thermostatTemperatureSetpoint
+        -%} {{- (target_in_c * (9.0/5.0)) + 32 | round(0) -}}
+      mode: >-
+        {{- states(thermostat_entity) -}}
+  - if:
+      - condition: template
+        value_template: "{{ mode != 'off' }}"
+    then:
+      - service: climate.set_temperature
+        data:
+          target_temp_high: >-
+            {{ target_temp_in_f if 'cool' in mode else
+            state_attr(thermostat_entity,'target_temp_high') }}
+          target_temp_low: >-
+            {{ target_temp_in_f if 'heat' in mode else
+            state_attr(thermostat_entity,'target_temp_low') }}
+        target:
+          entity_id: !input thermostat_entity
