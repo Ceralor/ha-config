@@ -10,6 +10,11 @@ blueprint:
         entity:
           domain: climate
           integration: mqtt
+    fahrenheit:
+      name: Convert to Fahrenheit
+      description: Needed if your thermostat is set to Fahrenheit
+      selector:
+        boolean:
 mode: single
 trigger:
   - platform: event
@@ -23,12 +28,17 @@ action:
   - alias: Set Thermostat
     variables:
       thermostat_entity: !input thermostat_entity
+      fahrenheit: !input fahrenheit
   - alias: Set Variables
     variables:
       target_temp_in_f: >-
-        {%- set
-        target_in_c=trigger.event.data.execution[0].params.thermostatTemperatureSetpoint
-        -%} {{- (target_in_c * (9.0/5.0)) + 32 | round(0) -}}
+        {%- set target_in_c = 
+          trigger.event.data.execution[0].params.thermostatTemperatureSetpoint -%}
+        {%- if fahrenheit -%}
+        {{ (target_in_c * (9.0/5.0)) + 32 | round(0) }}
+        {%- else -%}
+        {{ target_in_c }}
+        {%- endif -%}
       mode: >-
         {{- states(thermostat_entity) -}}
   - if:
